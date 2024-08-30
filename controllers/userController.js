@@ -1,14 +1,13 @@
-const knex = require("knex")(require("../config/knexfile").development);
+const user = require("../models/userModel");
 
-// Menggunakan Knex untuk menjalankan query
-
-exports.getAllUsers = (req, res) => {
-  knex("users")
-    .select("*")
-    .then((users) => {
+exports.getAllUsers = async (req, res) => {
+  await user.getAll((err, users) => {
+    try {
+      if (err) res.status(500).send(err);
+      res.json(users);
       console.log(users);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+    } catch (err) {
+      console.error(err.message);
+    }
+  });
 };
