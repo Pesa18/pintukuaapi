@@ -1,14 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const { json } = require("body-parser");
-const { response } = require("express");
-
 const prisma = new PrismaClient();
-
-exports.getAllUsers = async (req, res) => {
-  const users = await prisma.users.findMany();
-  res.json(users);
-  console.log(users);
-};
 
 exports.cekLogin = async (req, res) => {
   const user = await prisma.users.findMany({
@@ -25,3 +17,5 @@ exports.cekLogin = async (req, res) => {
 
   res.status(201).json({ login: true, email: user[0].email });
 };
+
+exports.login = async (req, res) => {};
