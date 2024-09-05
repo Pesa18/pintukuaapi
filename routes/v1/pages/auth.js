@@ -32,5 +32,6 @@ router.post("/api/register", async (req, res) => {
 });
 
 router.post("/ceklogin", authController.cekLogin);
+router.post("/login", authController.login);
 
 module.exports = router;
