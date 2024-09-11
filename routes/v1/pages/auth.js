@@ -33,5 +33,6 @@ router.post("/api/register", async (req, res) => {
 
 router.post("/ceklogin", authController.cekLogin);
 router.post("/login", authController.login);
+router.post("/loginwithgoogle", authController.loginWithGoogle);
 
 module.exports = router;
