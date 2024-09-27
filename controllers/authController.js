@@ -1,12 +1,13 @@
 const { PrismaClient } = require("@prisma/client");
-const { json } = require("body-parser");
+const { v4: uuidv4 } = require("uuid");
+const { json, name } = require("body-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = new PrismaClient();
 
 exports.cekLogin = async (req, res) => {
   try {
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user_accounts.findUnique({
       where: {
         email: req.body.email,
       },
@@ -32,11 +33,12 @@ exports.cekLogin = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user_accounts.findUnique({
       where: {
         email: email,
       },
     });
+
     if (!user) {
       return res
         .status(404)
@@ -50,8 +52,21 @@ exports.login = async (req, res) => {
         .json({ Status: "Gagal", message: "Invalid email or password" });
     }
 
+    if (user.email_verified_at == null) {
+      return res.status(201).json({
+        Status: "Gagal",
+        isVerified: false,
+        message: "Email not Verified",
+        data: {
+          user: {
+            email: user.email,
+            uuid: user.uuid,
+          },
+        },
+      });
+    }
     // Jika berhasil, buat token JWT
-    const token = jwt.sign({ userId: user.uuid }, "your_jwt_secret", {
+    const token = jwt.sign(user, "your_jwt_secret", {
       expiresIn: "1h",
     });
 
@@ -70,6 +85,43 @@ exports.login = async (req, res) => {
     });
 
     // res.json({ Berhasil: "euy" });
+  } catch (error) {
+    res.status(500).json({ status: "error", error: error });
+  }
+};
+
+exports.register = async (req, res) => {
+  const { name, email, password, phone } = req.body;
+
+  try {
+    const existingUser = await prisma.user_accounts.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (existingUser) {
+      return res.status(200).json({
+        status: "not success",
+        message: "'Email already exists!'",
+      });
+    }
+
+    var salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(password, salt);
+
+    const user = await prisma.user_accounts.create({
+      data: {
+        name: name,
+        email: email,
+        password: passwordHash,
+        phone: phone,
+      },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "user has been created",
+    });
   } catch (error) {
     res.status(500).json({ status: "error", error: error });
   }
