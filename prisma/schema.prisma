@@ -211,7 +211,7 @@ model users {
 }
 
 model user_accounts {
-  uuid              String    @default(uuid())
+  uuid              String    @id @default(uuid())
   name              String
   email             String    @unique(map: "user_accounts_email_unique")
   email_verified_at DateTime?
@@ -222,4 +222,16 @@ model user_accounts {
   remember_token    String?
   created_at        DateTime?
   updated_at        DateTime?
+  otps              otps[]
+}
+
+model otps {
+  id            Int           @id @default(autoincrement())
+  user_id       String
+  otp           String
+  expires_at    DateTime
+  is_used       Boolean       @default(false)
+  created_at    DateTime?
+  updated_at    DateTime?
+  user_accounts user_accounts @relation(fields: [user_id], references: [uuid], onDelete: Cascade, onUpdate: NoAction)
 }

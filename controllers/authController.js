@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const transporter = require("./sendEmail");
 const prisma = new PrismaClient();
+const { createOTP, validOtp } = require("./otpGenerator");
 
 exports.cekLogin = async (req, res) => {
   try {
@@ -40,7 +41,7 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res
-        .status(404)
+        .status(200)
         .json({ status: "Gagal", message: "User not found" });
     }
 
@@ -52,6 +53,11 @@ exports.login = async (req, res) => {
     }
 
     if (user.email_verified_at == null) {
+      const otpCreated = await createOTP(user.uuid, user.email);
+
+      if (!otpCreated) {
+        return res.status(500).json({ status: "error", error: error });
+      }
       return res.status(201).json({
         Status: "Gagal",
         isVerified: false,
@@ -157,6 +163,7 @@ exports.register = async (req, res) => {
         message: "'Email already exists!'",
       });
     }
+    console.log(existingUser);
 
     var salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
@@ -169,30 +176,50 @@ exports.register = async (req, res) => {
         phone: phone,
       },
     });
+    const otpSuccess = await createOTP(user.uuid, user.email);
 
-    const mailOptions = {
-      from: "asepalamin42@gmail.com", // Pengirim
-      to: "ciawigebangkua@gmail.com", // Penerima
-      subject: "Test Email", // Subjek email
-      text: "Hello, this is a test email sent from Node.js!", // Konten email
-    };
-
-    await transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return console.log("Error occurred: " + error.message);
-      }
-      console.log("Email sent: " + info.response);
-      return res.status(200).json({
-        status: "success",
-        message: "user has been created",
-        data: {
-          user: {
-            email: user.email,
-            uuid: user.uuid,
-          },
+    if (!otpSuccess) {
+      return res.status(500).json({ status: "error", error: error });
+    }
+    return res.status(200).json({
+      status: "success",
+      message: "user has been created",
+      data: {
+        user: {
+          email: user.email,
+          uuid: user.uuid,
         },
-      });
+      },
     });
+  } catch (error) {
+    // throw error;
+    return res.status(500).json({ status: "error", error: error });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  const { uuid, otp } = req.body;
+  try {
+    const valid = await validOtp(uuid, otp);
+
+    if (!valid) {
+      return res.status(200).json({
+        status: "not valid",
+        isverified: false,
+        message: "OTP not verified",
+      });
+    }
+    await prisma.user_accounts.update({
+      where: {
+        uuid: uuid,
+      },
+      data: {
+        email_verified_at: new Date(),
+      },
+    });
+    return res
+      .status(200)
+      .json({ status: "valid", isverified: true, message: "OTP Verified" });
   } catch (error) {
     res.status(500).json({ status: "error", error: error });
   }

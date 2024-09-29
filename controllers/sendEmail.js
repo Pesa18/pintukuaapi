@@ -9,19 +9,29 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// // Konfigurasi email
-// const mailOptions = {
-//   from: "your-email@gmail.com", // Pengirim
-//   to: "recipient-email@example.com", // Penerima
-//   subject: "Test Email", // Subjek email
-//   text: "Hello, this is a test email sent from Node.js!", // Konten email
-// };
+const sendEmail = async (
+  to = "ciawigebangkua@gmail.com",
+  subject = "Test Email",
+  text = "Test"
+) => {
+  try {
+    const mailOptions = {
+      from: "asepalamin42@gmail.com", // Pengirim
+      to: to, // Penerima
+      subject: subject, // Subjek email
+      text: text, // Konten email
+    };
+    await transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return false;
+      }
+      return true;
+    });
 
-// transporter.sendMail(mailOptions, (error, info) => {
-//   if (error) {
-//     return console.log("Error occurred: " + error.message);
-//   }
-//   console.log("Email sent: " + info.response);
-// });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
-module.exports = transporter;
+module.exports = sendEmail;
