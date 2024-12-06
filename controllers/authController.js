@@ -71,7 +71,7 @@ exports.login = async (req, res) => {
       });
     }
     // Jika berhasil, buat token JWT
-    const token = jwt.sign(user, "your_jwt_secret", {
+    const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
       expiresIn: "1h",
     });
 
@@ -122,7 +122,7 @@ exports.loginWithGoogle = async (req, res) => {
     }
 
     // Jika berhasil, buat token JWT
-    const token = jwt.sign({ userId: user.uuid }, "your_jwt_secret", {
+    const token = jwt.sign({ userId: user.uuid }, process.env.JWT_SECRET_KEY, {
       expiresIn: "1h",
     });
 
@@ -163,7 +163,6 @@ exports.register = async (req, res) => {
         message: "'Email already exists!'",
       });
     }
-    console.log(existingUser);
 
     var salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
@@ -222,5 +221,21 @@ exports.verifyOtp = async (req, res) => {
       .json({ status: "valid", isverified: true, message: "OTP Verified" });
   } catch (error) {
     res.status(500).json({ status: "error", error: error });
+  }
+};
+exports.resendOTP = async (req, res) => {
+  const { email, uuid } = req.body;
+  try {
+    const otpCreated = await createOTP(uuid, email);
+    if (!otpCreated) {
+      return res.status(200).json({
+        success: false,
+        status: "error",
+        message: "gagal Membuat OTP",
+      });
+    }
+    return res.status(200).json({ success: true, message: "berhasil" });
+  } catch (error) {
+    return res.status(500).json({ status: "error", error: error });
   }
 };
