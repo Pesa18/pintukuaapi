@@ -6,7 +6,19 @@ const getArticles = async () => {
     where: {
       status: "published",
     },
-    include: { categories: true },
+    include: {
+      categories: true,
+      users: {
+        include: {
+          kua_user: {
+            include: {
+              profile_companies: true,
+              employees: true,
+            },
+          },
+        },
+      },
+    },
   });
   const banner = await prisma.bannerApp.findMany();
   //   console.log(articles);
@@ -17,6 +29,7 @@ const getArticles = async () => {
 exports.mobileApp = async (req, res) => {
   try {
     const articles = await getArticles();
+
     return res.status(200).json({
       message: "ahsgdjkahgsdj",
       data: articles,

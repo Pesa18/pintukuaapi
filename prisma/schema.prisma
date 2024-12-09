@@ -208,9 +208,9 @@ model tags {
 }
 
 model users {
-  id                Int         @id @default(autoincrement())
+  id                Int               @id @default(autoincrement())
   name              String
-  email             String      @unique(map: "users_email_unique")
+  email             String            @unique(map: "users_email_unique")
   email_verified_at DateTime?
   password          String
   team_id           Int?
@@ -218,8 +218,10 @@ model users {
   created_at        DateTime?
   updated_at        DateTime?
   articles          articles[]
+  kua_user          kua_user[]
+  laporan_kinerja   laporan_kinerja[]
   team_user         team_user[]
-  teams             teams?      @relation(fields: [team_id], references: [id], onUpdate: NoAction)
+  teams             teams?            @relation(fields: [team_id], references: [id], onUpdate: NoAction)
 }
 
 model user_accounts {
@@ -254,7 +256,7 @@ model BannerApp {
   description String
   image_path  String
   link        String?
-  is_active   Boolean
+  is_active   Boolean   @default(true)
   start_at    DateTime?
   end_at      DateTime?
   created_at  DateTime?
@@ -265,10 +267,10 @@ model team_user {
   id         Int       @id @default(autoincrement())
   team_id    Int
   user_id    Int
-  created_at DateTime?
-  updated_at DateTime?
-  users      users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  teams      teams     @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  teams      teams     @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model teams {
@@ -279,6 +281,93 @@ model teams {
   updated_at    DateTime?
   article_views article_views[]
   articles      articles[]
+  employees     employees[]
   team_user     team_user[]
   users         users[]
+}
+
+model employees {
+  id                Int                @id @default(autoincrement())
+  name              String
+  email             String             @unique(map: "employees_email_unique")
+  team_id           Int?
+  phone             String?
+  nik               String             @unique(map: "employees_nik_unique")
+  is_kepala         Boolean            @default(false)
+  is_active         Boolean            @default(true)
+  status            String
+  grade             String?
+  position          String?
+  nip               String?            @unique(map: "employees_nip_unique")
+  id_kua            Int?
+  date_of_birth     String
+  date_of_joining   String
+  gender            String?
+  avatar            String?
+  address           String?
+  file              String?
+  created_at        DateTime?
+  updated_at        DateTime?
+  profile_companies profile_companies? @relation(fields: [id_kua], references: [id_kua], onUpdate: NoAction)
+  teams             teams?             @relation(fields: [team_id], references: [id], onUpdate: NoAction)
+  kua_user          kua_user[]
+}
+
+model kua_user {
+  id                Int                @id @default(autoincrement())
+  id_kua            Int?
+  id_employee       Int?
+  user_id           Int
+  created_at        DateTime?
+  updated_at        DateTime?
+  users             users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employees         employees?         @relation(fields: [id_employee], references: [id], onUpdate: NoAction)
+  profile_companies profile_companies? @relation(fields: [id_kua], references: [id_kua], onUpdate: NoAction)
+}
+
+model laporan_kinerja {
+  id                  Int               @id @default(autoincrement())
+  user_id             Int
+  id_kua              Int
+  kegiatan            String
+  deskripsi_pekerjaan String
+  tanggal             DateTime
+  created_at          DateTime?
+  updated_at          DateTime?
+  profile_companies   profile_companies @relation(fields: [id_kua], references: [id_kua], onDelete: Cascade, onUpdate: NoAction)
+  users               users             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model profile_companies {
+  id              Int               @id @default(autoincrement())
+  name            String
+  id_kua          Int               @unique(map: "profile_companies_id_kua_unique")
+  address         String
+  coordinates     String
+  id_kecamatan    Int
+  id_kabupaten    Int
+  id_provinsi     Int
+  contact         String
+  facebook        String?
+  email           String
+  instagram       String?
+  youtube         String?
+  tiktok          String?
+  foto            String
+  created_at      DateTime?
+  updated_at      DateTime?
+  employees       employees[]
+  kua_user        kua_user[]
+  laporan_kinerja laporan_kinerja[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model team_user_backup {
+  id         Int?
+  team_id    Int?
+  user_id    Int?
+  created_at Unsupported("num")?
+  updated_at Unsupported("num")?
+
+  @@ignore
 }
