@@ -9,5 +9,6 @@ router.post("/login", authController.login);
 router.post("/loginwithgoogle", authController.loginWithGoogle);
 router.post("/verifyOtp", authController.verifyOtp);
 router.post("/resendotp", authController.resendOTP);
+router.post("/refreshtoken", authMiddleware, authController.refreshTokens);
 
 module.exports = router;

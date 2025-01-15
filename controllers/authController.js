@@ -72,7 +72,11 @@ exports.login = async (req, res) => {
     }
     // Jika berhasil, buat token JWT
     const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
-      expiresIn: "1h",
+      expiresIn: "1m",
+    });
+
+    const refreshToken = jwt.sign(user, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1m",
     });
 
     return res.status(200).json({
@@ -86,6 +90,7 @@ exports.login = async (req, res) => {
           uuid: user.uuid,
           name: user.name,
         },
+        refreshToken: refreshToken,
       },
     });
 
@@ -121,9 +126,11 @@ exports.loginWithGoogle = async (req, res) => {
       });
     }
 
-    // Jika berhasil, buat token JWT
-    const token = jwt.sign({ userId: user.uuid }, process.env.JWT_SECRET_KEY, {
+    const token_ = jwt.sign(user, process.env.JWT_SECRET_KEY, {
       expiresIn: "1h",
+    });
+    const refreshToken = jwt.sign(user, process.env.JWT_SECRET_KEY, {
+      expiresIn: "1d",
     });
 
     return res.status(200).json({
@@ -131,12 +138,13 @@ exports.loginWithGoogle = async (req, res) => {
       message: "Login successful",
       data: {
         login: true,
-        token: token,
+        token: token_,
         user: {
           email: user.email,
           uuid: user.uuid,
           name: user.name,
         },
+        refreshToken: refreshToken,
       },
     });
   } catch (error) {
@@ -237,5 +245,36 @@ exports.resendOTP = async (req, res) => {
     return res.status(200).json({ success: true, message: "berhasil" });
   } catch (error) {
     return res.status(500).json({ status: "error", error: error });
+  }
+};
+
+exports.refreshTokens = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_KEY);
+    const user = await prisma.user_accounts.findUnique({
+      where: {
+        uuid: decoded.uuid,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "15m",
+    });
+
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.log("error", error);
+
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
