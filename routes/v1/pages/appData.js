@@ -7,5 +7,6 @@ const validateUUID = require("../../../middleware/uuidMiddleware");
 router.get("/mobile", appData.mobileApp);
 router.get("/getarticles", appData.getAllArticles);
 router.post("/article/:slug/view", appData.articleViews);
+router.get("/khutbah", appData.khutbahList);
 
 module.exports = router;

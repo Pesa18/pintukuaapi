@@ -9,6 +9,11 @@ const getArticles = async () => {
     },
     where: {
       status: "published",
+      NOT: {
+        categories: {
+          name: "khutbah",
+        },
+      },
     },
     include: {
       categories: true,
@@ -24,7 +29,11 @@ const getArticles = async () => {
       },
     },
   });
-  const banner = await prisma.bannerApp.findMany();
+  const banner = await prisma.bannerApp.findMany({
+    where: {
+      is_active: true,
+    },
+  });
   //   console.log(articles);
 
   return { articles, banner };
@@ -56,6 +65,11 @@ exports.getAllArticles = async (req, res) => {
       take: limit,
       where: {
         status: "published",
+        NOT: {
+          categories: {
+            name: "khutbah",
+          },
+        },
       },
       orderBy: {
         published_at: "desc",
@@ -210,5 +224,47 @@ exports.articleViews = async (req, res) => {
     console.log("error", error);
 
     return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+exports.khutbahList = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || "";
+    const offset = (page - 1) * limit;
+
+    const khutbah = await prisma.articles.findMany({
+      skip: offset,
+      take: limit,
+      where: {
+        status: "published",
+        categories: {
+          name: "khutbah",
+        },
+        title: {
+          contains: search,
+        },
+      },
+      include: {
+        categories: true,
+        users: {
+          include: {
+            kua_user: {
+              include: {
+                profile_companies: true,
+                employees: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return res.status(200).json({
+      khutbah,
+      message: "success",
+    });
+  } catch (error) {
+    return res.status(500).jsom({ message: "Internal server error" });
   }
 };
