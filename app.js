@@ -7,6 +7,7 @@ var logger = require("morgan");
 require("dotenv").config();
 var routerv1 = require("./routes/v1/index");
 const docsApi = require("./routes/api-docs");
+const indexRouter = require("./routes/index");
 
 var app = express();
 
@@ -22,7 +23,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Routes
 app.use("/api", routerv1);
-app.use("/api", docsApi);
+app.use("/coba", indexRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
