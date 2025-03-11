@@ -6,6 +6,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
 var routerv1 = require("./routes/v1/index");
+const docsApi = require("./routes/api-docs");
 
 var app = express();
 
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Routes
 app.use("/api", routerv1);
+app.use("/api", docsApi);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
